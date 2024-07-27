@@ -23,7 +23,6 @@ const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
 
 // Add Jobs to MongoDB
 export const scheduleJobs = async (schedule: any) => {
-
 	await connectToDB();
 
 	const now = new Date();
@@ -31,25 +30,39 @@ export const scheduleJobs = async (schedule: any) => {
 	const currentMinute = now.getMinutes();
 	const currentDay = now.getDay();
 
+	console.log(`Current Time: ${currentHour}:${currentMinute}, Day: ${currentDay}`);
+	console.log('Schedule:', schedule);
+
 	const currentSchedule = schedule.find((item: any) => item.time === currentHour);
-	const schedulesForTheHour = currentSchedule?.schedule[currentDay];
+	if (!currentSchedule) {
+		console.log('No current schedule found for the current hour.');
+		return;
+	}
 
-	if (schedulesForTheHour && schedulesForTheHour.length > 0) {
-		const awaitingJobs = schedulesForTheHour.filter(
-			(scheduleItem: any) =>
-				scheduleItem.minutes && scheduleItem.minutes <= currentMinute
-		);
+	const schedulesForTheHour = currentSchedule.schedule[currentDay];
+	if (!schedulesForTheHour || schedulesForTheHour.length === 0) {
+		console.log('No schedules for the current hour and day.');
+		return;
+	}
 
-		return awaitingJobs.map(async (scheduleItem: any) => {
-			const job = new Job({
-				name: 'jobs',
-				data: {
-					message: scheduleItem.content
-				}
-			});
-			await job.save();
-			console.log(`Job ${job._id} added to database`);
+	const awaitingJobs = schedulesForTheHour.filter(
+		(scheduleItem: any) => scheduleItem.minutes && scheduleItem.minutes <= currentMinute
+	);
+
+	if (awaitingJobs.length === 0) {
+		console.log('No jobs to schedule at this time.');
+		return;
+	}
+
+	for (const scheduleItem of awaitingJobs) {
+		const job = new Job({
+			name: 'jobs',
+			data: {
+				message: scheduleItem.content
+			}
 		});
+		await job.save();
+		console.log(`Job ${job._id} added to database`);
 	}
 };
 
