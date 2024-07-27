@@ -7,6 +7,7 @@ import connectToDB from "@/app/util";
 
 export async function POST(req: NextRequest) {
     const { schedule } = await req.json();
+    console.log(schedule);
     try {
         await connectToDB();
         const newSchedule = new Schedule({ schedule });
