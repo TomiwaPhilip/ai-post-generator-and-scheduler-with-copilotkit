@@ -1,3 +1,5 @@
+"use server";
+
 import mongoose from "mongoose";
 import connectToDB from "./app/util";
 
@@ -52,7 +54,7 @@ export const scheduleJobs = async (schedule: any) => {
 };
 
 // Process Jobs from MongoDB
-const processJobs = async () => {
+export const processJobs = async () => {
 	await connectToDB();
 	const pendingJobs = await Job.find({ status: 'pending' });
 
