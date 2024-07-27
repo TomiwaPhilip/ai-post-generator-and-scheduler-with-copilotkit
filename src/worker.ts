@@ -67,35 +67,50 @@ export const scheduleJobs = async (schedule: any) => {
 
 // Process Jobs from MongoDB
 export const processJobs = async () => {
-	await connectToDB();
-	const pendingJobs = await Job.find({ status: 'pending' });
+	try {
+		await connectToDB();
+		const pendingJobs = await Job.find({ status: 'pending' });
 
-	console.log("Jobs pending:", pendingJobs);
-
-	for (const job of pendingJobs) {
-		console.log(`Processing job ${job._id} with data: ${job.data.message}`);
-		console.log('Posting content...');
-
-		const postTweet = await fetch('https://api.twitter.com/2/tweets', {
-			method: 'POST',
-			headers: {
-				'Content-type': 'application/json',
-				Authorization: `Bearer ${process.env.TWITTER_ACCESS_TOKEN}`
-			},
-			body: JSON.stringify({ text: job.data.message })
-		});
-
-		if (postTweet.ok) {
-			console.log('Content posted!');
-			job.status = 'completed';
-			await job.save();
-			console.log(`${job._id} has completed!`);
-		} else {
-			console.log(postTweet.body);
-			console.log(`Failed to post content for job ${job._id}`);
+		if (!pendingJobs.length) {
+			console.log("No pending jobs to process.");
+			return;
 		}
+
+		console.log("Jobs pending:", pendingJobs);
+
+		for (const job of pendingJobs) {
+			console.log(`Processing job ${job._id} with data: ${job.data.message}`);
+			console.log('Posting content...');
+
+			try {
+				const response = await fetch('https://api.twitter.com/2/tweets', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': `Bearer ${process.env.TWITTER_ACCESS_TOKEN}`
+					},
+					body: JSON.stringify({ text: job.data.message })
+				});
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(`Failed to post content for job ${job._id}: ${JSON.stringify(errorData)}`);
+				}
+
+				console.log('Content posted!');
+				job.status = 'completed';
+				await job.save();
+				console.log(`${job._id} has completed!`);
+
+			} catch (postError: any) {
+				console.error(`Error posting content for job ${job._id}:`, postError.message);
+			}
+		}
+	} catch (dbError: any) {
+		console.error("Error connecting to the database or retrieving jobs:", dbError.message);
 	}
 };
+
 
 // Set interval to process jobs every minute
 setInterval(processJobs, 60000);
