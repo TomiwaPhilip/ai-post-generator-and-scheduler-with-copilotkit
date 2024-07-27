@@ -1,5 +1,5 @@
 import { CopilotRuntime, GoogleGenerativeAIAdapter } from "@copilotkit/backend";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
 
 export const runtime = "edge";
 
@@ -14,7 +14,7 @@ export async function POST(req: Request): Promise<Response> {
         }
 
         const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: geminiModel });
+        const model: GenerativeModel = genAI.getGenerativeModel({ model: geminiModel });
 
         const adapter = new GoogleGenerativeAIAdapter({ model });
         return copilotKit.response(req, adapter);
