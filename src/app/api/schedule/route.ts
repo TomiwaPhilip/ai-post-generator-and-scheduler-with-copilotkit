@@ -4,7 +4,14 @@ import cron from "node-cron";
 import mongoose from 'mongoose';
 import Schedule from './models/Schedule';
 
-mongoose.connect(process.env.MONGODB_URI, {
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI not provided")
+}
+
+// Connect to MongoDB
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     serverSelectionTimeoutMS: 5000

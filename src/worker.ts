@@ -18,8 +18,14 @@ const jobSchema = new mongoose.Schema({
 
 const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
 
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+	throw new Error("MONGODB_URI not provided")
+}
+
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(MONGODB_URI, {
 	useNewUrlParser: true,
 	useUnifiedTopology: true
 });
