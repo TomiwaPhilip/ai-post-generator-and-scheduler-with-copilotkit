@@ -58,6 +58,8 @@ export const processJobs = async () => {
 	await connectToDB();
 	const pendingJobs = await Job.find({ status: 'pending' });
 
+	console.log("Jobs pending:", pendingJobs);
+
 	for (const job of pendingJobs) {
 		console.log(`Processing job ${job._id} with data: ${job.data.message}`);
 		console.log('Posting content...');
