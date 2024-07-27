@@ -3,23 +3,12 @@ import { scheduleJobs } from "@/worker";
 import cron from "node-cron";
 import mongoose from 'mongoose';
 import Schedule from './models/Schedule';
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI not provided")
-}
-
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000
-});
+import connectToDB from "@/app/util";
 
 export async function POST(req: NextRequest) {
     const { schedule } = await req.json();
     try {
+        await connectToDB();
         const newSchedule = new Schedule({ schedule });
         await newSchedule.save();
 
@@ -42,6 +31,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
     try {
+        await connectToDB();
+
         const latestSchedule = await Schedule.findOne().sort({ createdAt: -1 });
         if (latestSchedule) {
             return NextResponse.json(
