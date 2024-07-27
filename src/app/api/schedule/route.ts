@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scheduleJobs } from "@/worker";
 import cron from "node-cron";
-import mongoose from 'mongoose';
-import Schedule from './models/Schedule';
 import connectToDB from "@/app/util";
+import Schedule from './models/Schedule';
 
 export async function POST(req: NextRequest) {
     const { schedule } = await req.json();
-    console.log(schedule);
     try {
         await connectToDB();
         const newSchedule = new Schedule({ schedule });
         await newSchedule.save();
 
-        cron.schedule('15 * * * * *', async () => {
+        cron.schedule('*/15 * * * * *', async () => {
             console.log('Triggering jobs...');
             await scheduleJobs(schedule);
         });
@@ -22,7 +20,8 @@ export async function POST(req: NextRequest) {
             { message: "Schedule updated!", schedule },
             { status: 200 }
         );
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Error updating schedule:', error.message);
         return NextResponse.json(
             { message: "Error updating schedule", error },
             { status: 500 }
@@ -46,7 +45,8 @@ export async function GET() {
                 { status: 404 }
             );
         }
-    } catch (error) {
+    } catch (error: any) {
+        console.error('Error retrieving schedule:', error.message);
         return NextResponse.json(
             { message: "Error retrieving schedule", error },
             { status: 500 }
