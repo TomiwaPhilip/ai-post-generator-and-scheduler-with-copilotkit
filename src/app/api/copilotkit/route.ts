@@ -1,10 +1,24 @@
-import { CopilotRuntime, OpenAIAdapter } from "@copilotkit/backend";
+import { CopilotRuntime, GoogleGenerativeAIAdapter } from "@copilotkit/backend";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const runtime = "edge";
 
 export async function POST(req: Request): Promise<Response> {
-    const copilotKit = new CopilotRuntime({});
-    const openaiModel = process.env["OPENAI_MODEL"];
+    try {
+        const copilotKit = new CopilotRuntime({});
+        const geminiApiKey = process.env.GEMINI_API_KEY;
+        const geminiModel = process.env.GEMINI_MODEL;
 
-    return copilotKit.response(req, new OpenAIAdapter({model: openaiModel}));
+        if (!geminiApiKey || !geminiModel) {
+            throw new Error("Gemini API Key or Model is not provided!");
+        }
+
+        const genAI = new GoogleGenerativeAI(geminiApiKey);
+        const model = genAI.getGenerativeModel({ model: geminiModel });
+
+        const adapter = new GoogleGenerativeAIAdapter({ model });
+        return copilotKit.response(req, adapter);
+    } catch (error: any) {
+        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
 }

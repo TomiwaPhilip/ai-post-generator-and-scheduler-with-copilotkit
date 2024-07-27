@@ -1,62 +1,89 @@
-import data from "./user.json";
-import { Worker, Queue } from 'bullmq';
-import Redis from "ioredis";
+import data from './user.json';
+import mongoose from "mongoose";
 
-const redis = new Redis({maxRetriesPerRequest: null});
-const scheduleQueue = new Queue('schedule-queue', { connection: redis });
+// Define Job Schema and Model
+const jobSchema = new mongoose.Schema({
+	name: String,
+	data: Object,
+	status: {
+		type: String,
+		enum: ['pending', 'completed'],
+		default: 'pending'
+	},
+	createdAt: {
+		type: Date,
+		default: Date.now
+	}
+});
 
-//👇🏻 add jobs to the queue
-export const scheduleJobs = async (schedule: AvailableScheduleItem[]) => {
-	//👇🏻 gets current time and day
+const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, {
+	useNewUrlParser: true,
+	useUnifiedTopology: true
+});
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', () => {
+	console.log('Connected to MongoDB');
+});
+
+// Add Jobs to MongoDB
+export const scheduleJobs = async (schedule: any) => {
 	const now = new Date();
 	const currentHour = now.getHours();
 	const currentMinute = now.getMinutes();
 	const currentDay = now.getDay();
 
-	//👇🏻 gets posts for the current hour
-	const currentSchedule = schedule.find((item) => item.time === currentHour);
+	const currentSchedule = schedule.find((item: any) => item.time === currentHour);
 	const schedulesForTheHour = currentSchedule?.schedule[currentDay];
 
-	//👇🏻 gets scheduled posts for the current time
-	if (schedulesForTheHour && schedulesForTheHour?.length > 0) {
+	if (schedulesForTheHour && schedulesForTheHour.length > 0) {
 		const awaitingJobs = schedulesForTheHour.filter(
-			(scheduleItem) =>
+			(scheduleItem: any) =>
 				scheduleItem.minutes && scheduleItem.minutes <= currentMinute
 		);
 
-		//👇🏻 add jobs to queue
-		return awaitingJobs.map(async (scheduleItem) => {
-			const job = await scheduleQueue.add("jobs", {
-				message: scheduleItem.content
-			}, {
-				removeOnComplete: true,
+		return awaitingJobs.map(async (scheduleItem: any) => {
+			const job = new Job({
+				name: 'jobs',
+				data: {
+					message: scheduleItem.content
+				}
 			});
-			console.log(`Job ${job.id} added to queue`);
+			await job.save();
+			console.log(`Job ${job._id} added to database`);
 		});
 	}
 };
 
-//👇🏻 processing jobs
-const scheduleWorker = new Worker('schedule-queue', async (job) => {
-  console.log(`Processing job ${job.id} of type ${job.name} with data: ${job.data.message}`)
-	console.log("Posting content...")
+// Process Jobs from MongoDB
+const processJobs = async () => {
+	const pendingJobs = await Job.find({ status: 'pending' });
 
-	//👇🏻 post content to X
-	const postTweet = await fetch("https://api.twitter.com/2/tweets", {
-		method: "POST",
-		headers: {
-			"Content-type": "application/json",
-			Authorization: `Bearer ${data.accessToken}`,
-		},
-		body: JSON.stringify({ text: job.data.message })
-	});
-	if (postTweet.ok) { 
-		  console.log("Content posted!")
+	for (const job of pendingJobs) {
+		console.log(`Processing job ${job._id} with data: ${job.data.message}`);
+		console.log('Posting content...');
+
+		const postTweet = await fetch('https://api.twitter.com/2/tweets', {
+			method: 'POST',
+			headers: {
+				'Content-type': 'application/json',
+				Authorization: `Bearer ${process.env.TWITTER_ACCESS_TOKEN}`
+			},
+			body: JSON.stringify({ text: job.data.message })
+		});
+
+		if (postTweet.ok) {
+			console.log('Content posted!');
+			job.status = 'completed';
+			await job.save();
+			console.log(`${job._id} has completed!`);
+		}
 	}
-}, { connection: redis})
+};
 
-//👇🏻 listening for completed job
-scheduleWorker.on('completed', job => {
-	console.log(`${job.id} has completed!`);
-});
-
+// Set interval to process jobs every minute
+setInterval(processJobs, 60000);

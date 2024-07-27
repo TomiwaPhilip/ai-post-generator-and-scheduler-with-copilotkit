@@ -1,23 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { scheduleJobs } from "@/worker";
 import cron from "node-cron";
-import Redis from "ioredis";
-const redis = new Redis();
+import mongoose from 'mongoose';
+import Schedule from './models/Schedule';
 
-export async function POST(req: NextRequest) { 
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000
+});
+
+export async function POST(req: NextRequest) {
     const { schedule } = await req.json();
     try {
-        await redis.set("schedule", JSON.stringify(schedule));
-        cron.schedule('15 * * * * *', async() => {
+        const newSchedule = new Schedule({ schedule });
+        await newSchedule.save();
+
+        cron.schedule('15 * * * * *', async () => {
             console.log('Triggering jobs...');
             await scheduleJobs(schedule);
         });
-    
+
         return NextResponse.json(
             { message: "Schedule updated!", schedule },
             { status: 200 }
         );
-    } catch (error) { 
+    } catch (error) {
         return NextResponse.json(
             { message: "Error updating schedule", error },
             { status: 500 }
@@ -27,18 +35,22 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
     try {
-        const schedule = await redis.get("schedule");
-        if (schedule) {
+        const latestSchedule = await Schedule.findOne().sort({ createdAt: -1 });
+        if (latestSchedule) {
             return NextResponse.json(
-                { message: "Schedule found", schedule: JSON.parse(schedule) },
+                { message: "Schedule found", schedule: latestSchedule.schedule },
                 { status: 200 }
+            );
+        } else {
+            return NextResponse.json(
+                { message: "No schedule found" },
+                { status: 404 }
             );
         }
     } catch (error) {
         return NextResponse.json(
-        { message: "Schedule not found" },
-        { status: 500 }
-    );
+            { message: "Error retrieving schedule", error },
+            { status: 500 }
+        );
+    }
 }
-}
-

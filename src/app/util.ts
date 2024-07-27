@@ -150,7 +150,7 @@ export const convertToHour = (timestamp: Date) => {
 export const getTwitterOauthUrl = () => {
 	const rootUrl = "https://twitter.com/i/oauth2/authorize";
 	const options = {
-		redirect_uri: "http://www.localhost:3000/dashboard",
+		redirect_uri: "https://y7gw2q-3000.csb.app/dashboard",
 		client_id: process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID!,
 		state: "state",
 		response_type: "code",
