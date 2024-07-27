@@ -2,6 +2,8 @@
 
 import mongoose from "mongoose";
 import connectToDB from "./app/util";
+import data from "@/user.json"
+import { loadUserData } from "./loadData";
 
 // Define Job Schema and Model
 const jobSchema = new mongoose.Schema({
@@ -65,7 +67,6 @@ export const scheduleJobs = async (schedule: any) => {
 	}
 };
 
-// Process Jobs from MongoDB
 export const processJobs = async () => {
 	try {
 		await connectToDB();
@@ -78,6 +79,9 @@ export const processJobs = async () => {
 
 		console.log("Jobs pending:", pendingJobs);
 
+		// Load the user data
+		const data = loadUserData();
+
 		for (const job of pendingJobs) {
 			console.log(`Processing job ${job._id} with data: ${job.data.message}`);
 			console.log('Posting content...');
@@ -87,7 +91,7 @@ export const processJobs = async () => {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
-						'Authorization': `Bearer ${process.env.TWITTER_ACCESS_TOKEN}`
+						'Authorization': `Bearer ${data.accessToken}`
 					},
 					body: JSON.stringify({ text: job.data.message })
 				});

@@ -9,7 +9,7 @@ const BasicAuthToken = Buffer.from(
 const twitterOauthTokenParams = {
 	client_id: process.env.TWITTER_CLIENT_ID!,
 	code_verifier: "8KxxO-RPl0bLSxX5AWwgdiFbMnry_VOKzFeIlVA7NoA",
-	redirect_uri: `http://www.localhost:3000/dashboard`,
+	redirect_uri: `http://my-twitter-poster/dashboard`,
 	grant_type: "authorization_code",
 };
 
