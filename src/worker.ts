@@ -1,5 +1,5 @@
-import data from './user.json';
 import mongoose from "mongoose";
+import connectToDB from "./app/util";
 
 // Define Job Schema and Model
 const jobSchema = new mongoose.Schema({
@@ -18,26 +18,12 @@ const jobSchema = new mongoose.Schema({
 
 const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-	throw new Error("MONGODB_URI not provided")
-}
-
-// Connect to MongoDB
-mongoose.connect(MONGODB_URI, {
-	useNewUrlParser: true,
-	useUnifiedTopology: true
-});
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', () => {
-	console.log('Connected to MongoDB');
-});
 
 // Add Jobs to MongoDB
 export const scheduleJobs = async (schedule: any) => {
+
+	await connectToDB();
+
 	const now = new Date();
 	const currentHour = now.getHours();
 	const currentMinute = now.getMinutes();
@@ -67,6 +53,7 @@ export const scheduleJobs = async (schedule: any) => {
 
 // Process Jobs from MongoDB
 const processJobs = async () => {
+	await connectToDB();
 	const pendingJobs = await Job.find({ status: 'pending' });
 
 	for (const job of pendingJobs) {
