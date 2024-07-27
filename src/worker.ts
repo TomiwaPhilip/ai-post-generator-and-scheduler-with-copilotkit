@@ -80,5 +80,5 @@ export const processJobs = async () => {
 	}
 };
 
-// Set interval to process jobs every minute
-setInterval(processJobs, 60000);
+// // Set interval to process jobs every minute
+// setInterval(processJobs, 60000);
