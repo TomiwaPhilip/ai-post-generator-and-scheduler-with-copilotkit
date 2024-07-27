@@ -1,24 +1,27 @@
-import { CopilotRuntime, GoogleGenerativeAIAdapter } from "@copilotkit/backend";
-import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
+import { NextRequest } from "next/server";
+import {
+    CopilotRuntime,
+    GoogleGenerativeAIAdapter,
+    copilotRuntimeNextJSAppRouterEndpoint,
+} from "@copilotkit/runtime";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const runtime = "edge";
+export const POST = async (req: NextRequest) => {
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    const geminiModel = process.env.GEMINI_MODEL;
 
-export async function POST(req: Request): Promise<Response> {
-    try {
-        const copilotKit = new CopilotRuntime({});
-        const geminiApiKey = process.env.GEMINI_API_KEY;
-        const geminiModel = process.env.GEMINI_MODEL;
-
-        if (!geminiApiKey || !geminiModel) {
-            throw new Error("Gemini API Key or Model is not provided!");
-        }
-
-        const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model: GenerativeModel = genAI.getGenerativeModel({ model: geminiModel });
-
-        const adapter = new GoogleGenerativeAIAdapter({ model });
-        return copilotKit.response(req, adapter);
-    } catch (error: any) {
-        return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    if (!geminiApiKey || !geminiModel) {
+        return new Response(JSON.stringify({ error: "Gemini API Key or Model is not provided!" }), { status: 500 });
     }
-}
+
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
+    const model = genAI.getGenerativeModel({ model: geminiModel });
+
+    const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
+        runtime: new CopilotRuntime(),
+        serviceAdapter: new GoogleGenerativeAIAdapter({ model }),
+        endpoint: req.nextUrl.pathname,
+    });
+
+    return handleRequest(req);
+};

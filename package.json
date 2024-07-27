@@ -10,10 +10,10 @@
     "worker": "npx tsx --watch src/worker.ts"
   },
   "dependencies": {
-    "@copilotkit/backend": "^0.36.0",
     "@copilotkit/react-core": "^0.36.0",
     "@copilotkit/react-textarea": "^0.36.0",
     "@copilotkit/react-ui": "^0.36.0",
+    "@copilotkit/runtime": "^1.1.0",
     "@google/generative-ai": "^0.16.0",
     "@headlessui/react": "^1.7.17",
     "bullmq": "^5.8.3",
