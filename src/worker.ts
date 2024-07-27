@@ -20,9 +20,8 @@ const jobSchema = new mongoose.Schema({
 
 const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
 
-
 // Add Jobs to MongoDB
-export const scheduleJobs = async (schedule: any) => {
+export const scheduleJobs = async (schedule) => {
 	await connectToDB();
 
 	const now = new Date();
@@ -33,7 +32,7 @@ export const scheduleJobs = async (schedule: any) => {
 	console.log(`Current Time: ${currentHour}:${currentMinute}, Day: ${currentDay}`);
 	console.log('Schedule:', schedule);
 
-	const currentSchedule = schedule.find((item: any) => item.time === currentHour);
+	const currentSchedule = schedule.find((item) => item.time === currentHour);
 	if (!currentSchedule) {
 		console.log('No current schedule found for the current hour.');
 		return;
@@ -46,7 +45,7 @@ export const scheduleJobs = async (schedule: any) => {
 	}
 
 	const awaitingJobs = schedulesForTheHour.filter(
-		(scheduleItem: any) => scheduleItem.minutes && scheduleItem.minutes <= currentMinute
+		(scheduleItem) => scheduleItem.minutes && scheduleItem.minutes <= currentMinute
 	);
 
 	if (awaitingJobs.length === 0) {
@@ -91,9 +90,11 @@ export const processJobs = async () => {
 			job.status = 'completed';
 			await job.save();
 			console.log(`${job._id} has completed!`);
+		} else {
+			console.log(`Failed to post content for job ${job._id}`);
 		}
 	}
 };
 
-// // Set interval to process jobs every minute
-// setInterval(processJobs, 60000);
+// Set interval to process jobs every minute
+setInterval(processJobs, 60000);
