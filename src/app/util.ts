@@ -152,7 +152,7 @@ export const convertToHour = (timestamp: Date) => {
 export const getTwitterOauthUrl = () => {
 	const rootUrl = "https://twitter.com/i/oauth2/authorize";
 	const options = {
-		redirect_uri: "https://y7gw2q-3000.csb.app/dashboard",
+		redirect_uri: "https://my-twitter-poster.vercel.app/dashboard",
 		client_id: process.env.NEXT_PUBLIC_TWITTER_CLIENT_ID!,
 		state: "state",
 		response_type: "code",
@@ -166,24 +166,24 @@ export const getTwitterOauthUrl = () => {
 };
 
 export default async function connectToDB() {
-  const MONGODB_URI = process.env.MONGODB_URI;
+	const MONGODB_URI = process.env.MONGODB_URI;
 
-  if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is missing");
-  }
+	if (!MONGODB_URI) {
+		throw new Error("MONGODB_URI is missing");
+	}
 
-  try {
-    if (mongoose.connection.readyState === 1) {
-      console.log("MongoDB is already connected.");
-      return;
-    }     
-    console.log("Connecting to MongoDB...");
-    await mongoose.connect(MONGODB_URI, {
-      dbName: "TwitterData",
-    });
-    console.log("MongoDB connected successfully.");
-  } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw error;
-  }
+	try {
+		if (mongoose.connection.readyState === 1) {
+			console.log("MongoDB is already connected.");
+			return;
+		}
+		console.log("Connecting to MongoDB...");
+		await mongoose.connect(MONGODB_URI, {
+			dbName: "TwitterData",
+		});
+		console.log("MongoDB connected successfully.");
+	} catch (error) {
+		console.error("MongoDB connection error:", error);
+		throw error;
+	}
 }
