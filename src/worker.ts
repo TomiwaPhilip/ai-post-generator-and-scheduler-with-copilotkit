@@ -91,6 +91,7 @@ export const processJobs = async () => {
 			await job.save();
 			console.log(`${job._id} has completed!`);
 		} else {
+			console.log(postTweet.body);
 			console.log(`Failed to post content for job ${job._id}`);
 		}
 	}
