@@ -21,7 +21,7 @@ const jobSchema = new mongoose.Schema({
 const Job = mongoose.models.Job || mongoose.model('Job', jobSchema);
 
 // Add Jobs to MongoDB
-export const scheduleJobs = async (schedule) => {
+export const scheduleJobs = async (schedule: any) => {
 	await connectToDB();
 
 	const now = new Date();
@@ -32,7 +32,7 @@ export const scheduleJobs = async (schedule) => {
 	console.log(`Current Time: ${currentHour}:${currentMinute}, Day: ${currentDay}`);
 	console.log('Schedule:', schedule);
 
-	const currentSchedule = schedule.find((item) => item.time === currentHour);
+	const currentSchedule = schedule.find((item: any) => item.time === currentHour);
 	if (!currentSchedule) {
 		console.log('No current schedule found for the current hour.');
 		return;
@@ -45,7 +45,7 @@ export const scheduleJobs = async (schedule) => {
 	}
 
 	const awaitingJobs = schedulesForTheHour.filter(
-		(scheduleItem) => scheduleItem.minutes && scheduleItem.minutes <= currentMinute
+		(scheduleItem: any) => scheduleItem.minutes && scheduleItem.minutes <= currentMinute
 	);
 
 	if (awaitingJobs.length === 0) {
