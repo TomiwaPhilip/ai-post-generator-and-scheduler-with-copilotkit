@@ -11,10 +11,7 @@ export async function POST(req: NextRequest) {
         const newSchedule = new Schedule({ schedule });
         await newSchedule.save();
 
-        cron.schedule('*/15 * * * * *', async () => {
-            console.log('Triggering jobs...');
-            await scheduleJobs(schedule);
-        });
+        await scheduleJobs(schedule);
 
         return NextResponse.json(
             { message: "Schedule updated!", schedule },
